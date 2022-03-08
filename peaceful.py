@@ -1,23 +1,32 @@
 from mitmproxy import http
 from mitmproxy import ctx
-import json
+from lxml import etree
+from time import time
 
 
-class Peace:
+def remove_war(text):
+    root = etree.HTML(text)
+    for element in root.iter():
+        for token, sub in [('war', 'peace'), ('War', 'Peace'), ('WAR', 'PEACE')]:
+            if element.text is not None and token in element.text:
+                element.text = element.text.replace(token, sub)
+            if element.tail is not None and token in element.tail:
+                element.tail = element.tail.replace(token, sub)
+    return etree.tostring(root, method='html', encoding='unicode')
+
+
+class PEACE:
     def __init__(self):
         self.num = 0
 
     def response(self, flow: http.HTTPFlow):
-        ctx.log.info("Received Response")
         if 'wikipedia.org' in flow.request.url:
-            ctx.log.info(f'Received Response url {flow.request.url}')
-            ctx.log.info(f'Received Response headers {json.dumps(list(flow.response.headers.keys()))}')
             if 'content-type' in flow.response.headers:
                 contenttype = flow.response.headers['content-type']
-                ctx.log.info(f'Received Response content-type {contenttype}')
                 if 'text/html' in contenttype:
-                    flow.response.text = flow.response.text.replace('war', 'peace')
-
+                    t0 = time()
+                    flow.response.text = remove_war(flow.response.text)
+                    ctx.log.info(f'processing took {time()-t0} seconds')
 addons = [
-    Peace()
+    PEACE()
 ]
