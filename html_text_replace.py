@@ -16,9 +16,6 @@ def remove_war(text):
 
 
 class PEACE:
-    def __init__(self):
-        self.num = 0
-
     def response(self, flow: http.HTTPFlow):
         if 'wikipedia.org' in flow.request.url:
             if 'content-type' in flow.response.headers:
