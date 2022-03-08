@@ -17,13 +17,12 @@ def remove_war(text):
 
 class PEACE:
     def response(self, flow: http.HTTPFlow):
-        if 'wikipedia.org' in flow.request.url:
-            if 'content-type' in flow.response.headers:
-                contenttype = flow.response.headers['content-type']
-                if 'text/html' in contenttype:
-                    t0 = time()
-                    flow.response.text = remove_war(flow.response.text)
-                    ctx.log.info(f'processing took {time()-t0} seconds')
+        if 'content-type' in flow.response.headers:
+            contenttype = flow.response.headers['content-type']
+            if 'text/html' in contenttype:
+                t0 = time()
+                flow.response.text = remove_war(flow.response.text)
+                ctx.log.info(f'processing took {time()-t0} seconds')
 addons = [
     PEACE()
 ]
