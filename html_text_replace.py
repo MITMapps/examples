@@ -21,11 +21,12 @@ _extend_mapping("capitalize")
 def remove_war(text):
     root = etree.HTML(text)
     for element in root.iter():
-        for token, sub in REPLACEMENTS:
-            if element.text is not None and token in element.text:
-                element.text = element.text.replace(token, sub)
-            if element.tail is not None and token in element.tail:
-                element.tail = element.tail.replace(token, sub)
+        if element.tag != 'script':
+            for token, sub in REPLACEMENTS:
+                if element.text is not None and token in element.text:
+                    element.text = element.text.replace(token, sub)
+                if element.tail is not None and token in element.tail:
+                    element.tail = element.tail.replace(token, sub)
     return etree.tostring(root, method='html', encoding='unicode')
 
 
@@ -33,7 +34,7 @@ class TextReplace:
     def response(self, flow: http.HTTPFlow):
         if 'content-type' in flow.response.headers:
             contenttype = flow.response.headers['content-type']
-            if 'text/html' in contenttype:
+            if 'text/html' in contenttype and len(flow.response.text):
                 t0 = time()
                 flow.response.text = remove_war(flow.response.text)
                 ctx.log.info(f'processing took {time()-t0} seconds')
