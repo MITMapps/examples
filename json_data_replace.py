@@ -1,11 +1,10 @@
 from mitmproxy import http
 from mitmproxy import ctx
-from lxml import etree
+import json
 from time import time
 
 
 REPLACEMENTS = [('russian', 'clowns'), ('russia', 'clown land'), ('putin', 'butt head')]
-
 
 def _extend_mapping(attr: str) -> None:
     # from https://github.com/FernOfSigma/owoifier/blob/main/owoifier/owoifier.py
@@ -18,25 +17,45 @@ def _extend_mapping(attr: str) -> None:
 _extend_mapping("upper")
 _extend_mapping("capitalize")
 
-def remove_war(text):
-    root = etree.HTML(text)
-    for element in root.iter():
+
+def tree_iter(tree, func, key=None):
+    if isinstance(tree, dict):
+        rtn = {}
+        for k, value in tree.items():
+            rtn[k] = tree_iter(value, func, k)
+        return rtn
+    elif isinstance(tree, list):
+        rtn = []
+        for value in tree:
+            rtn.append(tree_iter(value, func, key))
+        return rtn
+    else:
+        return func(tree, key)
+
+
+def replace_fun(text, key):
+    if key in ['content', 'text', 'title'] and isinstance(text, str):
         for token, sub in REPLACEMENTS:
-            if element.text is not None and token in element.text:
-                element.text = element.text.replace(token, sub)
-            if element.tail is not None and token in element.tail:
-                element.tail = element.tail.replace(token, sub)
-    return etree.tostring(root, method='html', encoding='unicode')
+            text = text.replace(token, sub)
+    return text
 
 
-class TextReplace:
+def remove_war(text):
+    root = json.loads(text)
+    root = tree_iter(root, replace_fun, 'root')
+    return json.dumps(root)
+
+
+class DataReplace:
     def response(self, flow: http.HTTPFlow):
         if 'content-type' in flow.response.headers:
             contenttype = flow.response.headers['content-type']
-            if 'text/html' in contenttype:
+            if 'application/json' in contenttype and len(flow.response.text):
                 t0 = time()
                 flow.response.text = remove_war(flow.response.text)
                 ctx.log.info(f'processing took {time()-t0} seconds')
+
+
 addons = [
-    TextReplace()
+    DataReplace()
 ]
