@@ -4,7 +4,7 @@ import json
 from time import time
 
 
-REPLACEMENTS = [('russian', 'clowns'), ('russia', 'clown land'), ('putin', 'butt head')]
+REPLACEMENTS = [('bitcoin', 'monopoly money')]
 
 def _extend_mapping(attr: str) -> None:
     # from https://github.com/FernOfSigma/owoifier/blob/main/owoifier/owoifier.py
@@ -46,7 +46,7 @@ def remove_war(text):
     return json.dumps(root)
 
 
-class DataReplace:
+class JsonDataReplace:
     def response(self, flow: http.HTTPFlow):
         if 'content-type' in flow.response.headers:
             contenttype = flow.response.headers['content-type']
@@ -57,5 +57,5 @@ class DataReplace:
 
 
 addons = [
-    DataReplace()
+    JsonDataReplace()
 ]
